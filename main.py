@@ -1,30 +1,46 @@
 import os
 from dotenv import load_dotenv
+
+from app.common.Database import Database
+
 load_dotenv()
-openai = os.environ.get("OPENAI_KEY")
-openai_org = os.environ.get("OPENAI_ORG")
 
-# import the app packages
+#connect to DB
+db = Database(
+    os.environ.get("DB_DRIVER"),
+    os.environ.get("DB_HOST"),
+    os.environ.get("DB_NAME"),
+    os.environ.get("DB_USERNAME"),
+    os.environ.get("DB_PASSWORD"),
+    os.environ.get("DB_PORT")
+)
+
+# openai = os.environ.get("OPENAI_KEY")
+# openai_org = os.environ.get("OPENAI_ORG")
+
+# init the app
 from fastapi import FastAPI
-from typing import Optional
-from pydantic import BaseModel, Field
-from dataclasses import dataclass
 
+# routes
+from app.routes import app as app_routes, ai as ai_routes
 app = FastAPI()
-@app.get("/")
-async def root():
-    return {"message":"All good"}
+
+app.include_router(app_routes.router)
+app.include_router(ai_routes.router)
+
 
 # import all AI packages
-from pydantic_ai import Agent, RunContext
+#
+# @dataclass
+# class SupportDeps:
+#     customer_id: int
+#     #db:
 
-@dataclass
-class SupportDeps:
-    customer_id: int
-    #db:
-agent = Agent(
-    'anthropic:claude-3-5-haiku-latest',
-    # deps_type=str,
-    system_prompt="You are a helpful assistant"
-)
+# agent = Agent(
+#     'anthropic:claude-3-5-haiku-latest',
+#     # deps_type=str,
+#     system_prompt="You are a helpful assistant"
+# )
+
+
 
