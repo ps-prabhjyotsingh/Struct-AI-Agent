@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from app.common.Database import Database
+from app.services.DatabaseService import DatabaseService
 
 load_dotenv()
 
@@ -14,6 +15,8 @@ db = Database(
     os.environ.get("DB_PASSWORD"),
     os.environ.get("DB_PORT")
 )
+
+DatabaseService.set(db)
 
 # openai = os.environ.get("OPENAI_KEY")
 # openai_org = os.environ.get("OPENAI_ORG")
