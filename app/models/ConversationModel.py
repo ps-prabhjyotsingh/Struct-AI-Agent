@@ -13,22 +13,9 @@ class ConversationModel(ConversationBase, table=True):
     def createMessage(self, entity: int, message: str|None = None):
         db: Database = DatabaseService.get()
         message = MessageModel(message=message, conversation_id=self.id, entity=entity)
-        message.status = 1
+        message.status = MessageModel.STATUS_SUCCESS
         db.save(message)  # save the reply
         return message
-
-    # def summarize(self):
-    #     db: Database = DatabaseService.get()
-    #     statement = ((select(MessageModel).where(MessageModel.conversation_id == self.id)
-    #                  .where(MessageModel.message.isnot(None)).order_by(MessageModel.id.desc()))
-    #                  .where(func.length(MessageModel.message) < 300)
-    #                  .limit(5))
-    #     messages = db.exec(statement)
-    #     summary: str = ""
-    #     for message in messages:
-    #         summary += message.message +"\n"
-    #
-    #     return {"messages": messages, "summary": summary}
 
     def summarize(self, messages, new_messages):
         db: Database = DatabaseService.get()

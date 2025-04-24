@@ -1,4 +1,3 @@
-import datetime
 
 from fastapi import APIRouter, HTTPException
 from pydantic_ai.messages import ModelMessagesTypeAdapter
@@ -9,6 +8,7 @@ from app.interfaces.ConversationInterface import Conversation as ConversationTyp
 from app.interfaces.ConversationReplyType import ConversationReplyType
 from app.interfaces.ConversationResponse import ConversationResponse
 from app.models.ConversationModel import ConversationModel
+from app.models.MessageModel import MessageModel
 from app.services.DatabaseService import DatabaseService
 from app.services.GeneralAIService import GeneralAIService
 from sqlmodel import select
@@ -22,10 +22,10 @@ def createConversation(conversation:ConversationType):
     db = DatabaseService.get()
     db.save(conversationModel)
 
-    conversationModel.createMessage(0, conversation.message)
+    conversationModel.createMessage(MessageModel.ENTITY_USER, conversation.message)
 
     #now for the AI's reply
-    message = conversationModel.createMessage(1)
+    message = conversationModel.createMessage(MessageModel.ENTITY_AI)
 
     aiService = GeneralAIService.getInstance()
     #aiService.becomeSomeone()
@@ -36,10 +36,10 @@ def createConversation(conversation:ConversationType):
         message.response_tokens = response.usage().response_tokens
         conversationModel.summarize(response.all_messages_json(), response.new_messages_json())
     except Exception as e:
-        message.status = 0
+        message.status = MessageModel.STATUS_ERROR
         message.error = str(e)
     db.save(message)
-    if message.status == 0:
+    if message.status == MessageModel.STATUS_ERROR:
         #failed
         return APIError(message=message.error)
     #fetch conversation again
@@ -66,24 +66,23 @@ def replyConversation(reply: ConversationReplyType,conversationID: int):
     if conversation is None:
         raise HTTPException(404,"Unable to find the requested conversation.")
     # add user message
-    conversation.createMessage(0, reply.message)
+    conversation.createMessage(MessageModel.ENTITY_USER, reply.message)
     # compose a reply
-    message = conversation.createMessage(1)
+    message = conversation.createMessage(MessageModel.ENTITY_AI)
     aiService = GeneralAIService.getInstance()
     history = ModelMessagesTypeAdapter.validate_json(conversation.all_messages)
-    response = aiService.query(reply.message, history)
     try:
-        # response = aiService.query(reply.message)
+        response = aiService.query(reply.message, history)
         message.message = response.data
         message.request_tokens = response.usage().request_tokens
         message.response_tokens = response.usage().response_tokens
         conversation.summarize(response.all_messages_json(), response.new_messages_json())
 
     except Exception as e:
-        message.status = 0
+        message.status = MessageModel.STATUS_ERROR
         message.error = str(e)
     db.save(message)
-    if message.status == 0:
+    if message.status == MessageModel.STATUS_ERROR:
         #failed
         return APIError(message=message.error)
     return message
