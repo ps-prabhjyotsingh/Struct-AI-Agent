@@ -7,10 +7,6 @@ from sqlalchemy.dialects.mysql import TEXT
 
 
 class MessageModel(SQLModel, table=True):
-    ENTITY_AI: int = 1
-    ENTITY_USER: int = 2
-    STATUS_SUCCESS: int = 1
-    STATUS_ERROR: int = 0
 
     id: int = Field(primary_key=True)
     message: str = Field(sa_column=Column(TEXT), max_length=65000)

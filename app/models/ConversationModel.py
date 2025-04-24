@@ -13,7 +13,7 @@ class ConversationModel(ConversationBase, table=True):
     def createMessage(self, entity: int, message: str|None = None):
         db: Database = DatabaseService.get()
         message = MessageModel(message=message, conversation_id=self.id, entity=entity)
-        message.status = MessageModel.STATUS_SUCCESS
+        message.status = 1
         db.save(message)  # save the reply
         return message
 

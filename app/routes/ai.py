@@ -22,10 +22,10 @@ def createConversation(conversation:ConversationType):
     db = DatabaseService.get()
     db.save(conversationModel)
 
-    conversationModel.createMessage(MessageModel.ENTITY_USER, conversation.message)
+    conversationModel.createMessage(0, conversation.message)
 
     #now for the AI's reply
-    message = conversationModel.createMessage(MessageModel.ENTITY_AI)
+    message = conversationModel.createMessage(1)
 
     aiService = GeneralAIService.getInstance()
     #aiService.becomeSomeone()
@@ -36,10 +36,10 @@ def createConversation(conversation:ConversationType):
         message.response_tokens = response.usage().response_tokens
         conversationModel.summarize(response.all_messages_json(), response.new_messages_json())
     except Exception as e:
-        message.status = MessageModel.STATUS_ERROR
+        message.status = 0
         message.error = str(e)
     db.save(message)
-    if message.status == MessageModel.STATUS_ERROR:
+    if message.status == 0:
         #failed
         return APIError(message=message.error)
     #fetch conversation again
@@ -66,9 +66,9 @@ def replyConversation(reply: ConversationReplyType,conversationID: int):
     if conversation is None:
         raise HTTPException(404,"Unable to find the requested conversation.")
     # add user message
-    conversation.createMessage(MessageModel.ENTITY_USER, reply.message)
+    conversation.createMessage(0, reply.message)
     # compose a reply
-    message = conversation.createMessage(MessageModel.ENTITY_AI)
+    message = conversation.createMessage(1)
     aiService = GeneralAIService.getInstance()
     history = ModelMessagesTypeAdapter.validate_json(conversation.all_messages)
     try:
@@ -79,10 +79,10 @@ def replyConversation(reply: ConversationReplyType,conversationID: int):
         conversation.summarize(response.all_messages_json(), response.new_messages_json())
 
     except Exception as e:
-        message.status = MessageModel.STATUS_ERROR
+        message.status = 0
         message.error = str(e)
     db.save(message)
-    if message.status == MessageModel.STATUS_ERROR:
+    if message.status == 0:
         #failed
         return APIError(message=message.error)
     return message
